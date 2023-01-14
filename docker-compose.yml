@@ -1,0 +1,93 @@
+version: '2.4'
+services:
+  traefik:
+    # v2.6.2+ has issues reading strings as arrays from yaml config, stay on 2.6.1 for now
+    image: docker.io/traefik:v2.6.1
+    restart: unless-stopped
+    volumes:
+      # static config
+      - "./config/traefik//static.yml:/etc/traefik/traefik.yml:ro"
+      # dynamic config
+      - "./config/traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro"
+    ports:
+      - "80:80"
+
+  klipper:
+    image: docker.io/mkuf/klipper:cbc17a7
+    restart: unless-stopped
+    devices:
+      - /dev/serial/by-id/usb-Klipper_rp2040_455035712790CE08-if00:/dev/serial/by-id/usb-Klipper_rp2040_455035712790CE08-if00
+      - /dev/serial/by-id/usb-Klipper_atmega32u4_12345-if00:/dev/serial/by-id/usb-Klipper_atmega32u4_12345-if00
+    volumes:
+      - ./config/printer:/opt/printer_data/config
+      - ./run:/opt/printer_data/run
+      - ./gcode:/opt/printer_data/gcodes
+      - ./logs:/opt/printer_data/logs
+
+  moonraker:
+    image: docker.io/mkuf/moonraker:225ec58
+    restart: unless-stopped
+    volumes:
+      - ./config/printer:/opt/printer_data/config
+      - /dev/null:/opt/klipper/config
+      - /dev/null:/opt/klipper/docs
+      - ./run:/opt/printer_data/run
+      - ./gcode:/opt/printer_data/gcodes
+      - ./logs:/opt/printer_data/logs
+
+  fluidd:
+    image: docker.io/cadriel/fluidd:v1.23.0
+    restart: unless-stopped
+
+  # platter
+  camera0:
+    image: docker.io/mkuf/ustreamer:latest
+    command: [ 
+      "--resolution=1920x1080",
+      "--desired-fps=30",
+      "--host=0.0.0.0",
+      "--port=8080",
+      "--format=MJPEG",
+      "--encoder=HW"
+    ]
+    shm_size: 128M
+    restart: unless-stopped
+    devices:
+       - /dev/v4l/by-id/usb-SunplusIT_Inc_USB_2.0_Camera_20201211V0-video-index0:/dev/video0
+
+# tiny boi
+#      - /dev/v4l/by-id/usb-Sunplus_IT_Co_FHD_Camera-video-index0:/dev/video0
+# c270
+#      - /dev/v4l/by-id/usb-046d_0825_39148B90-video-index0:/dev/video0
+
+  # printhead
+  camera1:
+    image: docker.io/mkuf/ustreamer:latest
+    command: [ 
+      "--resolution=640x480", 
+      "--desired-fps=30", 
+      "--host=0.0.0.0", 
+      "--port=8080", 
+      "--format=YUYV",
+      "--encoder=HW"
+    ]
+    shm_size: 128M
+    restart: unless-stopped
+    devices:
+      - /dev/v4l/by-id/usb-Generic_HD_camera-video-index0:/dev/video0
+
+  # chamber
+  camera2:
+    image: docker.io/mkuf/ustreamer:latest
+    command: [ 
+      "--resolution=1920x1080", 
+      "--desired-fps=30", 
+      "--host=0.0.0.0", 
+      "--port=8080", 
+      "--format=MJPEG",
+      "--encoder=HW"
+    ]
+    shm_size: 128M
+    restart: unless-stopped
+    devices:
+      - /dev/v4l/by-id/usb-SunplusIT_Inc_USB_2.0_Camera_YJGD20211216V4-video-index0:/dev/video0

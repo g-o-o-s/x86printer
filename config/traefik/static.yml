@@ -1,0 +1,13 @@
+# traefik "static" config
+log:
+  level: DEBUG
+entryPoints:
+  web:
+    address: ":80"
+
+# dynamic config
+providers:
+  file:
+    directory: "/etc/traefik/dynamic"
+    watch: true
+    debugLogGeneratedTemplate: true

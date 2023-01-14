@@ -1,0 +1,71 @@
+http:
+  middlewares:
+    camera-stripprefix:
+      stripPrefix:
+        prefixes:
+          - "/camera0"
+          - "/camera1"
+          - "/camera2"
+  
+  routers:
+    moonraker:
+      rule: "PathPrefix(`/websocket`,`/printer`,`/api`,`/access`,`/machine`,`/server`)"
+      service: "moonraker"
+      entrypoints:
+        - "web"
+
+    fluidd:
+      rule: "PathPrefix(`/`)"
+      service: "fluidd"
+      entrypoints:
+        - "web"
+  
+    camera0:
+      rule: "PathPrefix(`/camera0`)"
+      service: "camera0"
+      entrypoints:
+        - "web"
+      middlewares:
+        - "camera-stripprefix"
+    
+    camera1:
+      rule: "PathPrefix(`/camera1`)"
+      service: "camera1"
+      entrypoints:
+        - "web"
+      middlewares:
+        - "camera-stripprefix"
+    
+    camera2:
+      rule: "PathPrefix(`/camera2`)"
+      service: "camera2"
+      entrypoints:
+        - "web"
+      middlewares:
+        - "camera-stripprefix"
+  
+  services:
+    moonraker:
+      loadBalancer:
+        servers:
+          - url: "http://moonraker.:7125"
+    
+    fluidd:
+      loadBalancer:
+        servers:
+          - url: "http://fluidd.:80"
+    
+    camera0:
+      loadBalancer:
+        servers:
+          - url: "http://camera0.:8080"
+    
+    camera1:
+      loadBalancer:
+        servers:
+          - url: "http://camera1.:8080"
+          
+    camera2:
+      loadBalancer:
+        servers:
+          - url: "http://camera2.:8080"
